@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>心意魔法卡 V4.0</title>
+    <title>心意魔法卡 V5.0</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #1a1a1a; font-family: 'Microsoft JhengHei', sans-serif; user-select: none; }
         
@@ -13,7 +13,6 @@
         .category-btn { border: none; border-radius: 20px; font-size: clamp(20px, 3.5vw, 32px); font-weight: bold; color: #fff; cursor: pointer; transition: transform 0.2s; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .category-btn:active { transform: scale(0.95); }
         
-        /* 顏色定義 */
         .btn-bday { background: linear-gradient(135deg, #FF69B4, #FF1493); border: 4px solid #FFB6C1; }
         .btn-thank { background: linear-gradient(135deg, #40E0D0, #00CED1); border: 4px solid #AFEEEE; }
         .btn-xmas { background: linear-gradient(135deg, #228B22, #006400); border: 4px solid #90EE90; }
@@ -33,27 +32,27 @@
         #game-interface { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         canvas { display: block; background: #000; touch-action: none; }
 
-        /* 工具列 (右側) - 優化滾動條 */
+        /* 工具列 */
         #toolbar { position: absolute; right: 0; top: 0; width: 110px; height: 100%; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 10px; gap: 10px; border-left: 2px solid #555; overflow-y: auto; padding-bottom: 20px; }
-        
-        /* 隱藏 Scrollbar 但保持滾動功能 (Chrome/Safari) */
         #toolbar::-webkit-scrollbar { width: 0px; background: transparent; }
-        /* Firefox */
         #toolbar { scrollbar-width: none; }
 
         .tool-btn { width: 80px; height: 80px; flex-shrink: 0; border-radius: 15px; background: #333; border: 3px solid #555; font-size: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; position: relative; }
         .tool-btn.active { border-color: #FFD700; background: #555; transform: scale(1.05); box-shadow: 0 0 15px #FFD700; }
         .tool-label { position: absolute; bottom: 2px; font-size: 12px; color: white; width: 100%; text-align: center; pointer-events: none; text-shadow: 1px 1px 2px black; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 2px;}
 
-        /* 功能按鈕區 */
-        #actions { position: absolute; bottom: 20px; left: 20px; display: flex; gap: 15px; }
-        .action-btn { background: #444; color: white; border: 2px solid white; padding: 10px 20px; font-size: 20px; border-radius: 30px; cursor: pointer; }
-        .btn-back { background: #FF4500; }
-        .btn-save { background: #1E90FF; }
+        /* 功能按鈕區 - 調整間距以容納4個按鈕 */
+        #actions { position: absolute; bottom: 20px; left: 10px; display: flex; gap: 10px; flex-wrap: wrap; max-width: calc(100% - 130px); }
+        .action-btn { background: #444; color: white; border: 2px solid white; padding: 10px 15px; font-size: 18px; border-radius: 30px; cursor: pointer; white-space: nowrap; }
         
+        .btn-home { background: #FF4500; }  /* 主頁 */
+        .btn-undo { background: #9370DB; }  /* 紫色 復原 */
+        .btn-clear { background: #555; }    /* 灰色 清除 */
+        .btn-save { background: #1E90FF; }  /* 藍色 儲存 */
+        
+        .action-btn:active { transform: scale(0.95); }
+
         #canvas-title { position: absolute; top: 20px; left: 20px; color: rgba(255,255,255,0.5); font-size: 24px; pointer-events: none; }
-        
-        /* 滾動提示 (如果工具太多) */
         .scroll-hint { position: absolute; bottom: 5px; right: 0; width: 110px; text-align: center; color: rgba(255,255,255,0.5); font-size: 10px; pointer-events: none; }
     </style>
 </head>
@@ -61,7 +60,7 @@
 
     <div id="main-menu">
         <button id="settings-btn" onclick="openSettings()">⚙️ 設定</button>
-        <h1 style="color:white; margin-bottom: 20px; font-size: 3rem;">🎨 心意魔法卡 V4</h1>
+        <h1 style="color:white; margin-bottom: 20px; font-size: 3rem;">🎨 心意魔法卡 V5</h1>
         <div class="menu-grid">
             <button class="category-btn btn-bday" onclick="startGame('birthday')"><span>🎂</span>生日卡</button>
             <button class="category-btn btn-thank" onclick="startGame('thankyou')"><span>💖</span>感謝卡</button>
@@ -91,14 +90,14 @@
         <div id="toolbar"></div>
         <div class="scroll-hint">▼ 滑動更多</div>
         <div id="actions">
-            <button class="action-btn btn-back" onclick="goBack()">↩ 返回</button>
-            <button class="action-btn" onclick="clearCanvas()">🗑️ 清除</button>
+            <button class="action-btn btn-home" onclick="goHome()">🏠 主頁</button>
+            <button class="action-btn btn-undo" onclick="undoAction()">↩️ 復原</button>
+            <button class="action-btn btn-clear" onclick="clearCanvas(false)">🗑️ 清除</button>
             <button class="action-btn btn-save" onclick="saveCard()">📷 儲存</button>
         </div>
     </div>
 
 <script>
-    // --- 資料設定：每個主題擴充至 12 個工具 ---
     const themes = {
         birthday: {
             name: "生日快樂",
@@ -174,7 +173,6 @@
         }
     };
 
-    // --- 全局設定 ---
     let sizeMultiplier = 1.0;
     let volumeLevel = 0.5;
 
@@ -186,14 +184,16 @@
         document.getElementById('size-val').innerText = Math.round(sizeMultiplier * 100) + "%";
     }
 
-    // --- 核心變數 ---
     let currentThemeId = '';
     let currentTool = null;
     const canvas = document.getElementById('artCanvas');
     const ctx = canvas.getContext('2d');
     let width, height;
+    
+    // --- 歷史記錄 (Undo System) ---
+    let undoStack = [];
+    const MAX_HISTORY = 10; // 最多記憶10步
 
-    // --- 音效系統 ---
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioContext();
 
@@ -220,16 +220,23 @@
             gain.gain.setValueAtTime(vol, now);
             gain.gain.linearRampToValueAtTime(0, now + 0.1);
             osc.start(now); osc.stop(now + 0.1);
+        } else if (type === 'undo') {
+            // 復原音效 (快速下降音)
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+            gain.gain.setValueAtTime(vol, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.2);
+            osc.start(now); osc.stop(now + 0.2);
         }
     }
 
-    // --- 遊戲邏輯 ---
     function resize() {
         width = window.innerWidth;
         height = window.innerHeight;
         canvas.width = width;
         canvas.height = height;
-        if(currentThemeId) clearCanvas(false); 
+        if(currentThemeId) clearCanvas(true); // Resize clears logic needs care, but for now simple reset
     }
     window.addEventListener('resize', resize);
 
@@ -242,8 +249,8 @@
         document.getElementById('canvas-title').innerText = "正在製作: " + theme.name;
         
         resize();
-        clearCanvas(true);
-
+        clearCanvas(true); // Reset and clear history
+        
         const toolbar = document.getElementById('toolbar');
         toolbar.innerHTML = '';
         theme.tools.forEach((tool, index) => {
@@ -266,21 +273,48 @@
         playTone('select');
     }
 
-    function goBack() {
+    function goHome() {
         document.getElementById('game-interface').style.display = 'none';
         document.getElementById('main-menu').style.display = 'flex';
         currentThemeId = '';
     }
 
-    function clearCanvas(resetBg = true) {
+    // --- 核心：儲存狀態 ---
+    function saveState() {
+        if (undoStack.length >= MAX_HISTORY) {
+            undoStack.shift(); // 移除最舊的
+        }
+        // 儲存當前畫布的影像數據
+        undoStack.push(ctx.getImageData(0, 0, width, height));
+    }
+
+    function undoAction() {
+        if (undoStack.length > 0) {
+            playTone('undo');
+            const lastState = undoStack.pop();
+            ctx.putImageData(lastState, 0, 0);
+        }
+    }
+
+    function clearCanvas(init = false) {
         if (!currentThemeId) return;
+        
+        if (!init) {
+            // 如果不是初始化，而是用戶按清除，先儲存狀態以便復原
+            saveState(); 
+        } else {
+            undoStack = []; // 初始化時清空歷史
+        }
+
         ctx.fillStyle = themes[currentThemeId].bg;
         ctx.fillRect(0, 0, width, height);
-        if(!resetBg) playTone('select');
+        
+        if(!init) playTone('select');
     }
 
     // --- 繪圖處理 ---
     let isDrawing = false;
+    
     function draw(x, y) {
         if (!currentTool) return;
         const jitter = 5; 
@@ -321,23 +355,50 @@
         }
     }
 
-    function handleStart(x, y) { isDrawing = true; draw(x, y); }
+    function handleStart(x, y) { 
+        if (!isDrawing) {
+            // 在開始新的一筆畫之前，儲存當前狀態！
+            saveState(); 
+            isDrawing = true; 
+        }
+        draw(x, y); 
+    }
+    
     function handleMove(x, y) { if (isDrawing) draw(x, y); }
     function handleEnd() { isDrawing = false; }
 
     canvas.addEventListener('mousedown', e => handleStart(e.clientX, e.clientY));
     canvas.addEventListener('mousemove', e => handleMove(e.clientX, e.clientY));
     canvas.addEventListener('mouseup', handleEnd);
+    // 離開畫布也算結束
+    canvas.addEventListener('mouseleave', handleEnd); 
 
     canvas.addEventListener('touchstart', e => {
         e.preventDefault();
-        for (let i = 0; i < e.touches.length; i++) handleStart(e.touches[i].clientX, e.touches[i].clientY);
+        // 多點觸控時，只在第一個手指落下時儲存一次狀態
+        if (e.touches.length === 1) { 
+            // 這裡不需要呼叫 handleStart，因為下面迴圈會呼叫
+            // 但我們要在迴圈前判斷是否儲存狀態
+             if (!isDrawing) { saveState(); isDrawing = true; }
+        }
+        
+        for (let i = 0; i < e.touches.length; i++) {
+            // 注意：這裡直接呼叫 draw 而不是 handleStart 避免重複 saveState
+            draw(e.touches[i].clientX, e.touches[i].clientY);
+        }
     }, {passive: false});
 
     canvas.addEventListener('touchmove', e => {
         e.preventDefault();
-        for (let i = 0; i < e.touches.length; i++) handleMove(e.touches[i].clientX, e.touches[i].clientY);
+        for (let i = 0; i < e.touches.length; i++) {
+             // 這裡直接呼叫 draw
+            draw(e.touches[i].clientX, e.touches[i].clientY);
+        }
     }, {passive: false});
+    
+    canvas.addEventListener('touchend', e => {
+        if (e.touches.length === 0) isDrawing = false;
+    });
 
     function saveCard() {
         const link = document.createElement('a');
