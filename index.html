@@ -3,71 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>心意魔法卡 V2.0</title>
+    <title>心意魔法卡 V4.0</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #1a1a1a; font-family: 'Microsoft JhengHei', sans-serif; user-select: none; }
         
         /* 1. 主選單 (首頁) */
         #main-menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; background: #000; }
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 80%; height: 80%; }
-        .category-btn { border: none; border-radius: 20px; font-size: clamp(24px, 4vw, 40px); font-weight: bold; color: #fff; cursor: pointer; transition: transform 0.2s; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 85%; height: 65%; }
+        .category-btn { border: none; border-radius: 20px; font-size: clamp(20px, 3.5vw, 32px); font-weight: bold; color: #fff; cursor: pointer; transition: transform 0.2s; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .category-btn:active { transform: scale(0.95); }
         
         /* 顏色定義 */
-        .btn-bday { background: linear-gradient(135deg, #FF69B4, #FF1493); border: 4px solid #FFB6C1; } /* 生日 */
-        .btn-thank { background: linear-gradient(135deg, #40E0D0, #00CED1); border: 4px solid #AFEEEE; } /* 感謝 */
-        .btn-xmas { background: linear-gradient(135deg, #228B22, #006400); border: 4px solid #90EE90; } /* 聖誕 */
-        .btn-cny { background: linear-gradient(135deg, #FF0000, #8B0000); border: 4px solid #FFD700; } /* 新年 */
+        .btn-bday { background: linear-gradient(135deg, #FF69B4, #FF1493); border: 4px solid #FFB6C1; }
+        .btn-thank { background: linear-gradient(135deg, #40E0D0, #00CED1); border: 4px solid #AFEEEE; }
+        .btn-xmas { background: linear-gradient(135deg, #228B22, #006400); border: 4px solid #90EE90; }
+        .btn-cny { background: linear-gradient(135deg, #FF0000, #8B0000); border: 4px solid #FFD700; }
+
+        /* 設定按鈕 */
+        #settings-btn { position: absolute; top: 20px; right: 20px; font-size: 24px; background: #333; color: white; border: 2px solid #777; padding: 10px 20px; border-radius: 30px; cursor: pointer; }
+        
+        /* 設定面板 */
+        #settings-modal { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 300px; background: #222; border: 4px solid #FFD700; border-radius: 20px; padding: 20px; z-index: 20; color: white; text-align: center; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
+        .setting-row { margin: 20px 0; }
+        .slider { width: 100%; height: 15px; border-radius: 5px; background: #555; outline: none; -webkit-appearance: none; }
+        .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 25px; height: 25px; border-radius: 50%; background: #FFD700; cursor: pointer; }
+        .close-settings { background: #444; color: white; border: none; padding: 10px 30px; font-size: 18px; border-radius: 10px; cursor: pointer; margin-top: 10px; }
 
         /* 2. 繪圖介面 */
         #game-interface { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         canvas { display: block; background: #000; touch-action: none; }
 
-        /* 工具列 (右側) */
-        #toolbar { position: absolute; right: 0; top: 0; width: 120px; height: 100%; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 20px; gap: 15px; border-left: 2px solid #555; }
+        /* 工具列 (右側) - 優化滾動條 */
+        #toolbar { position: absolute; right: 0; top: 0; width: 110px; height: 100%; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 10px; gap: 10px; border-left: 2px solid #555; overflow-y: auto; padding-bottom: 20px; }
         
-        .tool-btn { width: 90px; height: 90px; border-radius: 15px; background: #333; border: 3px solid #555; font-size: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; position: relative; }
-        .tool-btn.active { border-color: #FFD700; background: #555; transform: scale(1.1); box-shadow: 0 0 15px #FFD700; }
-        .tool-label { position: absolute; bottom: 5px; font-size: 14px; color: white; width: 100%; text-align: center; pointer-events: none; text-shadow: 1px 1px 2px black;}
+        /* 隱藏 Scrollbar 但保持滾動功能 (Chrome/Safari) */
+        #toolbar::-webkit-scrollbar { width: 0px; background: transparent; }
+        /* Firefox */
+        #toolbar { scrollbar-width: none; }
 
-        /* 功能按鈕區 (左下) */
+        .tool-btn { width: 80px; height: 80px; flex-shrink: 0; border-radius: 15px; background: #333; border: 3px solid #555; font-size: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; position: relative; }
+        .tool-btn.active { border-color: #FFD700; background: #555; transform: scale(1.05); box-shadow: 0 0 15px #FFD700; }
+        .tool-label { position: absolute; bottom: 2px; font-size: 12px; color: white; width: 100%; text-align: center; pointer-events: none; text-shadow: 1px 1px 2px black; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 2px;}
+
+        /* 功能按鈕區 */
         #actions { position: absolute; bottom: 20px; left: 20px; display: flex; gap: 15px; }
         .action-btn { background: #444; color: white; border: 2px solid white; padding: 10px 20px; font-size: 20px; border-radius: 30px; cursor: pointer; }
         .btn-back { background: #FF4500; }
         .btn-save { background: #1E90FF; }
         
-        /* 標題提示 */
         #canvas-title { position: absolute; top: 20px; left: 20px; color: rgba(255,255,255,0.5); font-size: 24px; pointer-events: none; }
-
+        
+        /* 滾動提示 (如果工具太多) */
+        .scroll-hint { position: absolute; bottom: 5px; right: 0; width: 110px; text-align: center; color: rgba(255,255,255,0.5); font-size: 10px; pointer-events: none; }
     </style>
 </head>
 <body>
 
     <div id="main-menu">
-        <h1 style="color:white; margin-bottom: 20px; font-size: 3rem;">🎨 心意魔法卡</h1>
+        <button id="settings-btn" onclick="openSettings()">⚙️ 設定</button>
+        <h1 style="color:white; margin-bottom: 20px; font-size: 3rem;">🎨 心意魔法卡 V4</h1>
         <div class="menu-grid">
-            <button class="category-btn btn-bday" onclick="startGame('birthday')">
-                <span>🎂</span> 生日卡
-            </button>
-            <button class="category-btn btn-thank" onclick="startGame('thankyou')">
-                <span>💖</span> 感謝卡
-            </button>
-            <button class="category-btn btn-xmas" onclick="startGame('xmas')">
-                <span>🎄</span> 聖誕卡
-            </button>
-            <button class="category-btn btn-cny" onclick="startGame('cny')">
-                <span>🧧</span> 新年賀卡
-            </button>
+            <button class="category-btn btn-bday" onclick="startGame('birthday')"><span>🎂</span>生日卡</button>
+            <button class="category-btn btn-thank" onclick="startGame('thankyou')"><span>💖</span>感謝卡</button>
+            <button class="category-btn btn-xmas" onclick="startGame('xmas')"><span>🎄</span>聖誕卡</button>
+            <button class="category-btn btn-cny" onclick="startGame('cny')"><span>🧧</span>新年賀卡</button>
         </div>
+    </div>
+
+    <div id="settings-modal">
+        <h2>🔧 遊戲設定</h2>
+        <div class="setting-row">
+            <label>圖案大小: <span id="size-val">100%</span></label>
+            <br><br>
+            <input type="range" min="0.5" max="3.0" step="0.1" value="1.0" class="slider" id="size-slider" oninput="updateSettings()">
+        </div>
+        <div class="setting-row">
+            <label>音效音量</label>
+            <br><br>
+            <input type="range" min="0" max="1" step="0.1" value="0.5" class="slider" id="vol-slider" oninput="updateSettings()">
+        </div>
+        <button class="close-settings" onclick="closeSettings()">✅ 完成</button>
     </div>
 
     <div id="game-interface">
         <div id="canvas-title"></div>
         <canvas id="artCanvas"></canvas>
-        
-        <div id="toolbar">
-            </div>
-
+        <div id="toolbar"></div>
+        <div class="scroll-hint">▼ 滑動更多</div>
         <div id="actions">
             <button class="action-btn btn-back" onclick="goBack()">↩ 返回</button>
             <button class="action-btn" onclick="clearCanvas()">🗑️ 清除</button>
@@ -76,92 +98,137 @@
     </div>
 
 <script>
-    // --- 資料設定：四大主題與對應工具 ---
+    // --- 資料設定：每個主題擴充至 12 個工具 ---
     const themes = {
         birthday: {
             name: "生日快樂",
-            bg: "#1a0510", // 深粉紅黑
+            bg: "#1a0510",
             tools: [
                 { id: 'cake', icon: '🎂', label: '蛋糕', type: 'stamp', size: 60 },
-                { id: 'balloon', icon: '🎈', label: '氣球', type: 'stamp', size: 50 },
-                { id: 'ribbon', icon: '〰️', label: '彩帶', type: 'brush', color: '#FF69B4', width: 10 },
+                { id: 'candle', icon: '🕯️', label: '蠟燭', type: 'stamp', size: 55 },
+                { id: 'balloon', icon: '🎈', label: '氣球', type: 'stamp', size: 55 },
+                { id: 'gift', icon: '🎁', label: '禮物', type: 'stamp', size: 55 },
+                { id: 'crown', icon: '👑', label: '皇冠', type: 'stamp', size: 60 },
+                { id: 'cupcake', icon: '🧁', label: '甜點', type: 'stamp', size: 50 },
+                { id: 'candy', icon: '🍭', label: '波板糖', type: 'stamp', size: 50 },
+                { id: 'party', icon: '🥳', label: '開心', type: 'stamp', size: 50 },
+                { id: 'confetti', icon: '🎊', label: '拉炮', type: 'stamp', size: 60 },
+                { id: 'music', icon: '🎵', label: '音樂', type: 'stamp', size: 50 },
+                { id: 'ribbon', icon: '〰️', label: '彩帶', type: 'brush', color: '#FF69B4', width: 12 },
                 { id: 'text', icon: 'A', label: '生日快樂', type: 'text', content: '生日快樂!', color: '#FFD700' }
             ]
         },
         thankyou: {
             name: "感謝心意",
-            bg: "#05151a", // 深藍綠黑
+            bg: "#05151a",
             tools: [
-                { id: 'flower', icon: '🌸', label: '花朵', type: 'stamp', size: 50 },
+                { id: 'flower', icon: '🌸', label: '櫻花', type: 'stamp', size: 50 },
+                { id: 'rose', icon: '🌹', label: '玫瑰', type: 'stamp', size: 50 },
+                { id: 'bouquet', icon: '💐', label: '花束', type: 'stamp', size: 60 },
                 { id: 'heart', icon: '💖', label: '愛心', type: 'stamp', size: 50 },
-                { id: 'star', icon: '✨', label: '閃光', type: 'brush', color: '#00FFFF', width: 5 },
+                { id: 'like', icon: '👍', label: '讚', type: 'stamp', size: 50 },
+                { id: 'medal', icon: '🥇', label: '金牌', type: 'stamp', size: 55 },
+                { id: 'trophy', icon: '🏆', label: '獎盃', type: 'stamp', size: 60 },
+                { id: 'sun', icon: '🌞', label: '陽光', type: 'stamp', size: 60 },
+                { id: 'rainbow', icon: '🌈', label: '彩虹', type: 'stamp', size: 70 },
+                { id: 'smile', icon: '😊', label: '笑臉', type: 'stamp', size: 50 },
+                { id: 'star', icon: '✨', label: '閃光', type: 'brush', color: '#00FFFF', width: 6 },
                 { id: 'text', icon: 'A', label: 'Thank You', type: 'text', content: 'Thank You', color: '#FFFFFF' }
             ]
         },
         xmas: {
             name: "聖誕快樂",
-            bg: "#051a05", // 深綠黑
+            bg: "#051a05",
             tools: [
                 { id: 'tree', icon: '🎄', label: '聖誕樹', type: 'stamp', size: 70 },
                 { id: 'santa', icon: '🎅', label: '聖誕人', type: 'stamp', size: 60 },
+                { id: 'deer', icon: '🦌', label: '馴鹿', type: 'stamp', size: 60 },
+                { id: 'snowman', icon: '⛄', label: '雪人', type: 'stamp', size: 60 },
+                { id: 'sock', icon: '🧦', label: '聖誕襪', type: 'stamp', size: 55 },
+                { id: 'cookie', icon: '🍪', label: '薑餅', type: 'stamp', size: 50 },
+                { id: 'bell', icon: '🔔', label: '鈴鐺', type: 'stamp', size: 50 },
+                { id: 'star_tree', icon: '🌟', label: '星星', type: 'stamp', size: 55 },
+                { id: 'box', icon: '📦', label: '包裹', type: 'stamp', size: 55 },
+                { id: 'scarf', icon: '🧣', label: '圍巾', type: 'stamp', size: 55 },
                 { id: 'snow', icon: '❄️', label: '雪花', type: 'brush', color: '#FFFFFF', width: 8 },
                 { id: 'text', icon: 'A', label: 'Merry Xmas', type: 'text', content: 'Merry Xmas', color: '#FF0000' }
             ]
         },
         cny: {
             name: "農曆新年",
-            bg: "#2b0a0a", // 深紅黑
+            bg: "#2b0a0a",
             tools: [
+                { id: 'dragon', icon: '🐲', label: '龍頭', type: 'stamp', size: 70 },
                 { id: 'lantern', icon: '🏮', label: '燈籠', type: 'stamp', size: 60 },
-                { id: 'fuk', icon: '🧧', label: '利是', type: 'stamp', size: 50 },
+                { id: 'fuk_pkt', icon: '🧧', label: '利是', type: 'stamp', size: 50 },
+                { id: 'firecracker', icon: '🧨', label: '炮仗', type: 'stamp', size: 60 },
+                { id: 'ingot', icon: '💰', label: '元寶', type: 'stamp', size: 55 },
+                { id: 'coin', icon: '🪙', label: '金幣', type: 'stamp', size: 50 },
+                { id: 'orange', icon: '🍊', label: '大吉', type: 'stamp', size: 55 },
+                { id: 'peach', icon: '🍑', label: '壽桃', type: 'stamp', size: 55 },
+                { id: 'dumpling', icon: '🥟', label: '餃子', type: 'stamp', size: 55 },
+                { id: 'fish', icon: '🐟', label: '有魚', type: 'stamp', size: 60 },
                 { id: 'gold', icon: '🟡', label: '金粉', type: 'brush', color: '#FFD700', width: 15 },
                 { id: 'text', icon: 'A', label: '福', type: 'text', content: '福', color: '#FFD700' }
             ]
         }
     };
 
-    // --- 變數 ---
+    // --- 全局設定 ---
+    let sizeMultiplier = 1.0;
+    let volumeLevel = 0.5;
+
+    function openSettings() { document.getElementById('settings-modal').style.display = 'block'; }
+    function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
+    function updateSettings() {
+        sizeMultiplier = parseFloat(document.getElementById('size-slider').value);
+        volumeLevel = parseFloat(document.getElementById('vol-slider').value);
+        document.getElementById('size-val').innerText = Math.round(sizeMultiplier * 100) + "%";
+    }
+
+    // --- 核心變數 ---
     let currentThemeId = '';
     let currentTool = null;
     const canvas = document.getElementById('artCanvas');
     const ctx = canvas.getContext('2d');
     let width, height;
 
-    // --- 音效系統 (合成音) ---
+    // --- 音效系統 ---
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioContext();
 
     function playTone(type) {
         if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (volumeLevel <= 0) return;
+
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         const now = audioCtx.currentTime;
+        const vol = (type === 'select' ? 0.3 : 0.1) * volumeLevel;
 
         if (type === 'select') {
             osc.type = 'sine';
             osc.frequency.setValueAtTime(600, now);
-            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.setValueAtTime(vol, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
             osc.start(now); osc.stop(now + 0.2);
         } else if (type === 'draw') {
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(300 + Math.random()*200, now);
-            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.setValueAtTime(vol, now);
             gain.gain.linearRampToValueAtTime(0, now + 0.1);
             osc.start(now); osc.stop(now + 0.1);
         }
     }
 
-    // --- 核心邏輯 ---
-
+    // --- 遊戲邏輯 ---
     function resize() {
         width = window.innerWidth;
         height = window.innerHeight;
         canvas.width = width;
         canvas.height = height;
-        // 如果正在遊戲中，重繪背景
         if(currentThemeId) clearCanvas(false); 
     }
     window.addEventListener('resize', resize);
@@ -170,21 +237,19 @@
         currentThemeId = themeId;
         const theme = themes[themeId];
         
-        // 切換介面
         document.getElementById('main-menu').style.display = 'none';
         document.getElementById('game-interface').style.display = 'block';
         document.getElementById('canvas-title').innerText = "正在製作: " + theme.name;
         
         resize();
-        clearCanvas(true); // 設置背景色
+        clearCanvas(true);
 
-        // 生成工具列
         const toolbar = document.getElementById('toolbar');
         toolbar.innerHTML = '';
         theme.tools.forEach((tool, index) => {
             const btn = document.createElement('div');
             btn.className = 'tool-btn';
-            if (index === 0) { // 預設選中第一個
+            if (index === 0) { 
                 btn.classList.add('active');
                 currentTool = tool;
             }
@@ -196,7 +261,6 @@
 
     function selectTool(tool, btnElement) {
         currentTool = tool;
-        // 更新 UI
         document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
         btnElement.classList.add('active');
         playTone('select');
@@ -217,30 +281,26 @@
 
     // --- 繪圖處理 ---
     let isDrawing = false;
-    let lastX = 0, lastY = 0;
-
     function draw(x, y) {
         if (!currentTool) return;
-
-        // 隨機散射一點點，讓眼動儀的抖動變成藝術效果
         const jitter = 5; 
-        const dx = (Math.random() - 0.5) * jitter;
-        const dy = (Math.random() - 0.5) * jitter;
-        x += dx; y += dy;
+        x += (Math.random() - 0.5) * jitter;
+        y += (Math.random() - 0.5) * jitter;
 
         playTone('draw');
 
         if (currentTool.type === 'stamp') {
-            // 限制印章密度，避免重疊太密
-            if (Math.random() > 0.1) return; 
-            ctx.font = `${currentTool.size}px Arial`;
+            if (Math.random() > 0.15) return; 
+            const finalSize = currentTool.size * sizeMultiplier;
+            ctx.font = `${finalSize}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(currentTool.icon, x, y);
         } 
         else if (currentTool.type === 'text') {
-             if (Math.random() > 0.05) return; // 文字出現頻率低一點
-            ctx.font = `bold 40px Microsoft JhengHei`;
+             if (Math.random() > 0.05) return;
+            const finalSize = 40 * sizeMultiplier;
+            ctx.font = `bold ${finalSize}px Microsoft JhengHei`;
             ctx.fillStyle = currentTool.color;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -250,11 +310,11 @@
             ctx.shadowBlur = 0;
         }
         else if (currentTool.type === 'brush') {
-            // 連續線條 / 粒子刷
             ctx.beginPath();
-            ctx.arc(x, y, currentTool.width, 0, Math.PI * 2);
+            const finalWidth = currentTool.width * sizeMultiplier;
+            ctx.arc(x, y, finalWidth, 0, Math.PI * 2);
             ctx.fillStyle = currentTool.color;
-            ctx.shadowBlur = 10;
+            ctx.shadowBlur = 10 * sizeMultiplier;
             ctx.shadowColor = currentTool.color;
             ctx.fill();
             ctx.shadowBlur = 0;
@@ -265,7 +325,6 @@
     function handleMove(x, y) { if (isDrawing) draw(x, y); }
     function handleEnd() { isDrawing = false; }
 
-    // 事件監聽 (支援 Mouse / Touch / Eye Tracker Mouse Emulation)
     canvas.addEventListener('mousedown', e => handleStart(e.clientX, e.clientY));
     canvas.addEventListener('mousemove', e => handleMove(e.clientX, e.clientY));
     canvas.addEventListener('mouseup', handleEnd);
@@ -288,7 +347,6 @@
         playTone('select');
     }
     
-    // 初始化
     resize();
 </script>
 </body>
